@@ -1,0 +1,5 @@
+<launch>
+
+	<node pkg="duckiegym-ros-wrapper" type="duckiegym_ros_wrapper_node.py" name="duckiegym_ros_wrapper_node" output="screen"/>
+
+</launch>

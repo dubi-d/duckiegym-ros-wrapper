@@ -13,7 +13,9 @@ dt-launchfile-init
 # NOTE: Use `dt-exec COMMAND` to run the main process (blocking process)
 
 # launching app
-roslaunch duckiegym-ros-wrapper wrapper_node.launch
+dt-exec Xvfb :1 -screen 0 1024x768x24 -ac +extension GLX +render -noreset
+export DISPLAY=:1
+roslaunch duckiegym-ros-wrapper duckiegym_ros_wrapper_node.launch
 
 # ----------------------------------------------------------------------------
 # YOUR CODE ABOVE THIS LINE
