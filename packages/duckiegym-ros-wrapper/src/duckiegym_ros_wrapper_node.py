@@ -5,11 +5,8 @@ import os
 import cv2
 import yaml
 from cv_bridge import CvBridge
-import numpy as np
 
-import gym_duckietown
 from gym_duckietown.simulator import Simulator
-
 from duckietown.dtros import DTROS, NodeType
 
 from sensor_msgs.msg import CompressedImage, CameraInfo
@@ -29,7 +26,7 @@ class DuckiegymRosWrapperNode(DTROS):
 
         self.bridge = CvBridge()
 
-        vehicle_name = os.environ.get("VEHICLE_NAME")  # ToDo put in launch file / launcher arg?
+        vehicle_name = os.environ.get("VEHICLE_NAME")
         image_topic = "/" + vehicle_name + "/camera_node/image/compressed"
         self.pub_img = rospy.Publisher(image_topic, CompressedImage)
         camera_info_topic = "/" + vehicle_name + "/camera_node/camera_info"
@@ -48,9 +45,11 @@ class DuckiegymRosWrapperNode(DTROS):
             full_transparency=True,
             distortion=False,
         )
-        self.log("SKKKKKKKKKKKKKKKKKKKKKRRRRRRRRRRRRRRRRRRRRRA")
 
     def run_simulator(self):
+        """
+        Main loop of this node, runs simulation loop and camera publishers.
+        """
         while not rospy.is_shutdown():
             observation, reward, done, misc = self.sim.step(self.action)
             self.publish_camera_info()
@@ -60,18 +59,30 @@ class DuckiegymRosWrapperNode(DTROS):
                 self.sim.reset()
 
     def callback_wheels_cmd(self, msg):
+        """
+        Update action variable (parameter for simulator) on callback.
+        """
         self.action = [msg.vel_left, msg.vel_right]
 
     def publish_camera_image(self, observation):
+        """
+        Publish simulated camera frame as CompressedImage message.
+        """
         img = self.bridge.cv2_to_compressed_imgmsg(cv2.cvtColor(observation, cv2.COLOR_RGB2BGR), dst_format="jpg")
         img.header.stamp = rospy.Time.now()
         self.pub_img.publish(img)
 
     def publish_camera_info(self):
+        """
+        Publish calibration info about camera.
+        """
         self.camera_info.header.stamp = rospy.Time.now()
         self.pub_camera_info.publish(self.camera_info)
 
     def load_camera_info(self, filename):
+        """
+        Load calibration info about camera from config file.
+        """
         with open(filename, 'r') as stream:
             calib_data = yaml.load(stream)
         cam_info = CameraInfo()
@@ -88,4 +99,3 @@ class DuckiegymRosWrapperNode(DTROS):
 if __name__ == '__main__':
     duckiegym_ros_wrapper_node = DuckiegymRosWrapperNode("duckiegym_ros_wrapper_node")
     duckiegym_ros_wrapper_node.run_simulator()
-    rospy.spin()
